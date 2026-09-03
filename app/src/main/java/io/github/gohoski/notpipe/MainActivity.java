@@ -254,6 +254,8 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             adapter = new VideoAdapter(this, layout, videos);
             setAdapterForView(listView, adapter);
         }
+        Intent tgIntent = new Intent(MainActivity.this, io.github.gohoski.notpipe.TelegramService.class);
+        startService(tgIntent);
     }
 
     private String extractYouTubeId(String query) {
@@ -532,8 +534,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                 if (listView != null) {
                     setAdapterForView(listView, adapter);
                 }
-                Intent tgIntent = new Intent(this, io.github.gohoski.notpipe.TelegramService.class);
-                startService(tgIntent);
+
             }
         }
     }
