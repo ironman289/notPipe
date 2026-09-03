@@ -2,12 +2,9 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        // Keep legacy repo if the original had it
-        maven { url "https://maven.google.com" } 
     }
     dependencies {
-        // Upgraded from 2.x to 3.6.4 to fix the base-extension XML parsing crash
-        classpath 'com.android.tools.build:gradle:3.6.4'
+        classpath 'com.android.tools.build:gradle:3.5.4'
     }
 }
 
@@ -15,7 +12,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://maven.google.com" }
     }
 }
 
