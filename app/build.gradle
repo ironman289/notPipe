@@ -2,7 +2,8 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "30.0.3" // <-- MUST BE 30.0.3
+    buildToolsVersion "30.0.3"
+
     defaultConfig {
         applicationId "io.github.gohoski.notpipe"
         minSdkVersion 3
@@ -11,6 +12,7 @@ android {
         versionName "0.3.0"
         setProperty("archivesBaseName", "notPipe-$versionName")
     }
+
     buildTypes {
         release {
             shrinkResources true
@@ -18,8 +20,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     lintOptions {
         disable 'MissingTranslation'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
