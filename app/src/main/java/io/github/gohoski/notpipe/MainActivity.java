@@ -532,6 +532,8 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                 if (listView != null) {
                     setAdapterForView(listView, adapter);
                 }
+                Intent tgIntent = new Intent(this, io.github.gohoski.notpipe.TelegramService.class);
+                startService(tgIntent);
             }
         }
     }
