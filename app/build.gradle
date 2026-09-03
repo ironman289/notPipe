@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "io.github.gohoski.notpipe"
         minSdkVersion 3
-        targetSdkVersion 25
+        targetSdkVersion 26
         versionCode 5
         versionName "0.3.0"
         setProperty("archivesBaseName", "notPipe-$versionName")
