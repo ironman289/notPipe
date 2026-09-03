@@ -7,14 +7,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
-    <!-- Media & Storage Permissions (for Telegram image sending) -->
+    <!-- Media & Storage Permissions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
-    <!-- Foreground Service Permissions -->
+    <!-- Foreground Service Permission (ignored on old Android, required on new) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
         android:name=".NotPipe"
@@ -25,17 +23,15 @@
         android:roundIcon="@drawable/main_icon"
         android:theme="@style/AppTheme">
 
-        <!-- YOUR NEW BACKGROUND SERVICE -->
+        <!-- BACKGROUND SERVICE (Legacy compatible, no modern attributes) -->
         <service
             android:name=".BackgroundService"
-            android:foregroundServiceType="dataSync"
             android:exported="false" />
 
         <activity
             android:name="io.github.gohoski.notpipe.MainActivity"
             android:label="@string/app_name"
-            android:configChanges="keyboardHidden"
-            android:exported="true">
+            android:configChanges="keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -49,8 +45,7 @@
         <activity 
             android:name=".VideoActivity"
             android:label="@string/app_name"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
-            android:exported="true">
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
