@@ -2,7 +2,6 @@ package io.github.gohoski.notpipe;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
 
 import io.github.gohoski.notpipe.api.Manager;
@@ -16,19 +15,10 @@ public class NotPipe extends Application {
     public void onCreate() {
         super.onCreate();
         appContext = this;
-        
         ConfigManager.init(this);
         ConfigManager.getInstance().ensureInstancesConfigured();
         Manager.init();
         SSLDisabler.disableSSLCertificateChecking();
-
-        // Start TelegramService
-        Intent tgIntent = new Intent(this, TelegramService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(tgIntent);
-        } else {
-            startService(tgIntent);
-        }
     }
 
     public static Context getAppContext() {
