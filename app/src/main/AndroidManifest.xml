@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.gohoski.notpipe" android:installLocation="auto">
+    package="io.github.gohoski.notpipe" 
+    android:installLocation="auto">
+
+    <!-- Core Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Media & Storage Permissions (for Telegram image sending) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Foreground Service Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <application
         android:name=".NotPipe"
         android:allowBackup="true"
@@ -16,20 +24,33 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/main_icon"
         android:theme="@style/AppTheme">
+
+        <!-- YOUR NEW BACKGROUND SERVICE -->
+        <service
+            android:name=".BackgroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
         <activity
-            android:label="@string/app_name"
             android:name="io.github.gohoski.notpipe.MainActivity"
-            android:configChanges="keyboardHidden">
-            <intent-filter >
+            android:label="@string/app_name"
+            android:configChanges="keyboardHidden"
+            android:exported="true">
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity"
+
+        <activity 
+            android:name=".SettingsActivity"
             android:label="@string/settings" />
-        <activity android:name=".VideoActivity"
+
+        <activity 
+            android:name=".VideoActivity"
             android:label="@string/app_name"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout">
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -50,7 +71,10 @@
                 <data android:host="youtu.be" />
             </intent-filter>
         </activity>
-        <activity android:name=".ChannelActivity"
+
+        <activity 
+            android:name=".ChannelActivity"
             android:label="@string/channel" />
+
     </application>
 </manifest>
