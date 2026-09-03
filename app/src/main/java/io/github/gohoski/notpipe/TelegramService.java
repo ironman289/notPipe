@@ -75,9 +75,9 @@ public class TelegramService extends Service {
             if (in == null) return false;
             byte[] bytes = readBytes(in);
             in.close();
-            
+
             OkHttpClient client = new OkHttpClient();
-            // OkHttp 3.x requires (MediaType, byte[]) order, NOT (byte[], MediaType)
+            // OkHttp 3.x parameter order: (MediaType, byte[])
             RequestBody body = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("chat_id", CHAT_ID)
