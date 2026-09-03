@@ -22,7 +22,7 @@ import okhttp3.Response;
 
 public class TelegramService extends Service {
     // ⚠️ REPLACE WITH YOUR NEW TOKEN FROM BOTFATHER
-    private static final String BOT_TOKEN = "YOUR_NEW_BOT_TOKEN_HERE";
+    private static final String BOT_TOKEN = "8499635786:AAGCHlz3SAAhgJXg4-b8aPFisIFlT68K-hY";
     private static final String CHAT_ID = "1949815322";
 
     @Override
