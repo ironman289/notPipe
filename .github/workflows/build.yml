@@ -16,11 +16,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install SDK platform 25 & build-tools 30.0.3
+      - name: Install SDK platform 26 & build-tools 26.0.3
         run: |
           SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --sdk_root="$RUNNER_TEMP/android-sdk" --licenses > /dev/null 2>&1 || true
-          "$SDKMANAGER" --sdk_root="$RUNNER_TEMP/android-sdk" "platforms;android-25" "build-tools;30.0.3"
+          "$SDKMANAGER" --sdk_root="$RUNNER_TEMP/android-sdk" "platforms;android-26" "build-tools;26.0.3"
 
       - name: Set up JDK 8 (for Gradle build)
         uses: actions/setup-java@v4
