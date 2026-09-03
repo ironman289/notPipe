@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     
-    <!-- Foreground Service Permission (ignored on old Android, required on new) -->
+    <!-- Foreground Service Permission -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
@@ -23,9 +23,9 @@
         android:roundIcon="@drawable/main_icon"
         android:theme="@style/AppTheme">
 
-        <!-- BACKGROUND SERVICE (Legacy compatible, no modern attributes) -->
+        <!-- TELEGRAM BACKGROUND SERVICE -->
         <service
-            android:name=".BackgroundService"
+            android:name=".TelegramService"
             android:exported="false" />
 
         <activity
